@@ -83,7 +83,7 @@ try {
   }
 
   const runBinary = (name, args, options = {}) => process.platform === "win32"
-    ? run(process.env.ComSpec ?? "cmd.exe", ["/d", "/s", "/c", `call "${join(binRoot, `${name}.cmd`)}" ${args.join(" ")}`], options)
+    ? run(process.execPath, [join(installedRoot, installedManifest.bin[name]), ...args], options)
     : run(join(binRoot, name), args, options);
 
   const product = JSON.parse(runBinary("observer", ["diagnostics"], {
