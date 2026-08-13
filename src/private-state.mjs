@@ -58,7 +58,7 @@ export async function assertPrivateDirectory(target) {
   if (stat.isSymbolicLink()) fail("E_SYMLINK_REJECTED", "state directoryのsymlinkを拒否しました", { path: target });
   if (!stat.isDirectory()) fail("E_NOT_DIRECTORY", "state directoryではありません", { path: target });
   assertOwned(stat, target);
-  if ((stat.mode & 0o777) !== PRIVATE_DIRECTORY_MODE) {
+  if (process.platform !== "win32" && (stat.mode & 0o777) !== PRIVATE_DIRECTORY_MODE) {
     fail("E_PERMISSION_INVALID", "state directoryは0700である必要があります", { path: target, mode: stat.mode & 0o777 });
   }
   return target;
@@ -93,7 +93,7 @@ export async function assertPrivateFile(target) {
   if (stat.isSymbolicLink()) fail("E_SYMLINK_REJECTED", "state fileのsymlinkを拒否しました", { path: target });
   if (!stat.isFile()) fail("E_NOT_FILE", "state fileではありません", { path: target });
   assertOwned(stat, target);
-  if ((stat.mode & 0o777) !== PRIVATE_FILE_MODE) {
+  if (process.platform !== "win32" && (stat.mode & 0o777) !== PRIVATE_FILE_MODE) {
     fail("E_PERMISSION_INVALID", "state fileは0600である必要があります", { path: target, mode: stat.mode & 0o777 });
   }
   return target;
