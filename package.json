@@ -45,7 +45,7 @@
     "test": "node scripts/run-tests.mjs",
     "test:performance": "node test/performance-acceptance.mjs",
     "test:throughline-integration": "node --test test/throughline-black-box.integration.mjs",
-    "syntax": "node --check bin/*.mjs && node --check src/*.mjs && node --check scripts/*.mjs && node --check test/*.mjs",
+    "syntax": "node scripts/check-syntax.mjs",
     "check": "npm run syntax && git diff --check",
     "test:package": "node scripts/verify-package-install.mjs",
     "verify:release-commit": "node scripts/verify-release-commit.mjs",
