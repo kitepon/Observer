@@ -52,6 +52,26 @@ test("unsupported platformはpackage integrityを保ったまま非readyにす�
   assert.deepEqual(result.checks.at(-1), { name: "platform", status: "unsupported" });
 });
 
+test("Windows checkoutのCRLF shebangもbinary integrityとして受理する", async () => {
+  const root = await copyPackage();
+  const manifest = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
+  for (const relativePath of Object.values(manifest.bin)) {
+    const binary = join(root, relativePath);
+    const source = await readFile(binary, "utf8");
+    await writeFile(binary, source.replaceAll("\n", "\r\n"));
+  }
+  const result = await runObserverProductDiagnostics({
+    packageRoot: root,
+    platform: "win32",
+    nodeVersion: "24.0.0",
+  });
+  assert.equal(result.status, "unsupported_platform");
+  assert.deepEqual(result.checks.find(({ name }) => name === "bin_integrity"), {
+    name: "bin_integrity",
+    status: "ok",
+  });
+});
+
 test("package manifest tamperと古いNodeは固定errorで失敗する", async () => {
   const root = await copyPackage();
   const manifestPath = join(root, "package.json");
