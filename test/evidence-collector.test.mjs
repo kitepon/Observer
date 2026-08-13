@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
+import { join, parse, resolve } from "node:path";
 import test from "node:test";
 
 import {
@@ -11,6 +12,9 @@ import {
 import { ObserverError } from "../src/observer-error.mjs";
 
 const SHA = "a".repeat(64);
+const PROJECT_ROOT = resolve(parse(process.cwd()).root, "repo");
+const PLAN_PATH = join(PROJECT_ROOT, "docs", "plan.md");
+const OUTSIDE_PLAN_PATH = resolve(parse(process.cwd()).root, "outside", "plan.md");
 const CONTEXT = {
   target_id: `p_${SHA}`,
   watch_id: "w_11111111-1111-4111-8111-111111111111",
@@ -50,7 +54,7 @@ function request(overrides = {}) {
   return {
     context: CONTEXT,
     turns: [],
-    project_root: "/repo",
+    project_root: PROJECT_ROOT,
     plan_refs: ["file:docs/plan.md"],
     test_receipts: [{
       ref: "test:focused",
@@ -66,11 +70,11 @@ function request(overrides = {}) {
 }
 
 function dependencies(overrides = {}) {
-  const files = new Map([["/repo/docs/plan.md", Buffer.from("# approved plan\n")]]);
+  const files = new Map([[PLAN_PATH, Buffer.from("# approved plan\n")]]);
   return {
     fs: {
       realpath: async (target) => target,
-      stat: async (target) => target === "/repo" ? { isDirectory: () => true } : { isFile: () => true, size: files.get(target).byteLength },
+      stat: async (target) => target === PROJECT_ROOT ? { isDirectory: () => true } : { isFile: () => true, size: files.get(target).byteLength },
       readFile: async (target) => files.get(target),
     },
     runGit: async ({ cwd, args }) => ({ stdout: Buffer.from(`${cwd}:${args.join(" ")}`), stderr: Buffer.alloc(0) }),
@@ -126,7 +130,7 @@ test("root外へcanonical realpathでescapeするplanはunavailableとして残�
   const input = await collectEvidenceInput(request(), dependencies({
     fs: {
       ...dependencies().fs,
-      realpath: async (target) => target === "/repo/docs/plan.md" ? "/outside/plan.md" : target,
+      realpath: async (target) => target === PLAN_PATH ? OUTSIDE_PLAN_PATH : target,
     },
   }));
   assert.deepEqual(input.plan[0], {
@@ -141,7 +145,7 @@ test("root外へcanonical realpathでescapeするplanはunavailableとして残�
 test("巨大・non-UTF8 planとgit出力は部分本文を返さずunavailableにする", async () => {
   const tooLarge = 1024 * 1024 + 1;
   const planInput = await collectEvidenceInput(request(), dependencies({
-    fs: { ...dependencies().fs, stat: async (target) => target === "/repo" ? { isDirectory: () => true } : { isFile: () => true, size: tooLarge } },
+    fs: { ...dependencies().fs, stat: async (target) => target === PROJECT_ROOT ? { isDirectory: () => true } : { isFile: () => true, size: tooLarge } },
   }));
   assert.equal(planInput.plan[0].available, false);
   assert.equal(planInput.plan[0].unavailable_code, "PLAN_TOO_LARGE");

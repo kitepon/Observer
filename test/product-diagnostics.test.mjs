@@ -5,6 +5,7 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
 
 import {
   OBSERVER_PRODUCT_DIAGNOSTICS_SCHEMA,
@@ -13,7 +14,7 @@ import {
   runObserverProductDiagnostics,
 } from "../src/product-diagnostics.mjs";
 
-const ROOT = new URL("..", import.meta.url).pathname;
+const ROOT = fileURLToPath(new URL("..", import.meta.url));
 
 test("source package diagnosticsはsanitized manifestと5 binaryを固定する", async () => {
   const result = await runObserverProductDiagnostics({ platform: "darwin", nodeVersion: "22.13.0" });
@@ -65,7 +66,9 @@ test("package manifest tamperと古いNodeは固定errorで失敗する", async 
   });
 });
 
-test("binary modeとsymlink tamperは同じsanitized errorで失敗する", async () => {
+test("binary modeとsymlink tamperは同じsanitized errorで失敗する", {
+  skip: process.platform === "win32" ? "WindowsはPOSIX実行modeとsymlinkを製品契約に持たない" : false,
+}, async () => {
   const modeRoot = await copyPackage();
   await chmod(join(modeRoot, "bin/observer.mjs"), 0o644);
   await assert.rejects(runObserverProductDiagnostics({ packageRoot: modeRoot }), {

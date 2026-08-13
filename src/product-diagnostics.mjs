@@ -129,7 +129,7 @@ async function verifyBins(packageRoot, fileSystem) {
       const info = await requireRegularFile(path, fileSystem,
         "E_PRODUCT_BIN_INVALID", "Observer binaryが不正です");
       const source = await fileSystem.readFile(path, "utf8");
-      if ((info.mode & 0o100) === 0 || !source.startsWith("#!/usr/bin/env node\n")) {
+      if ((process.platform !== "win32" && (info.mode & 0o100) === 0) || !source.startsWith("#!/usr/bin/env node\n")) {
         fail("E_PRODUCT_BIN_INVALID", "Observer binaryが不正です");
       }
     }
