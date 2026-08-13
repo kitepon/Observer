@@ -58,7 +58,7 @@ test("Windows checkoutのCRLF shebangもbinary integrityとして受理する", 
   for (const relativePath of Object.values(manifest.bin)) {
     const binary = join(root, relativePath);
     const source = await readFile(binary, "utf8");
-    await writeFile(binary, source.replaceAll("\n", "\r\n"));
+    await writeFile(binary, source.replaceAll("\r\n", "\n").replaceAll("\n", "\r\n"));
   }
   const result = await runObserverProductDiagnostics({
     packageRoot: root,
