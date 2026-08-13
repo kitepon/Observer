@@ -2,24 +2,27 @@ name: CI
 
 on:
   push:
+    branches: [main]
   pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 実行する工場環境
+        type: choice
+        default: all
+        options: [all, macos-native, linux-native, windows-native, wsl2]
+
+permissions:
+  contents: read
 
 jobs:
-  test:
-    strategy:
-      fail-fast: false
-      matrix:
-        os:
-          - ubuntu-latest
-          - macos-latest
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npm test
-      - run: npm run check
-      - run: npm run test:package
+  full:
+    uses: kitepon/dotagents/.github/workflows/factory-full-ci.yml@main
+    with:
+      environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'all' }}
+      full-command: >-
+        npm ci &&
+        npm test &&
+        npm run check &&
+        npm run test:package
