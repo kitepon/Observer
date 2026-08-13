@@ -9,7 +9,8 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const projectDirectory = dirname(dirname(fileURLToPath(import.meta.url)));
-const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
+const npmCli = process.env.npm_execpath;
+assert.ok(npmCli, "npm scriptとして実行し、現在のnpm CLIを引き継ぐ必要があります");
 const binaryNames = [
   "observer",
   "observer-mcp",
@@ -37,11 +38,15 @@ function run(command, args, { cwd = projectDirectory, expectedStatus = 0 } = {})
   return result;
 }
 
+function runNpm(args) {
+  return run(process.execPath, [npmCli, ...args]);
+}
+
 const workRoot = await mkdtemp(join(tmpdir(), "observer-package-"));
 try {
   const archiveRoot = join(workRoot, "archive");
   await mkdir(archiveRoot);
-  const pack = run(npmCommand, [
+  const pack = runNpm([
     "pack",
     "--json",
     "--ignore-scripts",
@@ -53,7 +58,7 @@ try {
   const archivePath = join(archiveRoot, packed[0].filename);
 
   const prefix = join(workRoot, "prefix");
-  run(npmCommand, [
+  runNpm([
     "install",
     "--global",
     "--prefix",
