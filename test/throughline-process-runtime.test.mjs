@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 
 import {
   createVerifiedThroughlineClient,
@@ -11,7 +12,7 @@ import {
 } from "../src/throughline-process-runtime.mjs";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url)).replace(/\/$/, "");
-const THROUGHLINE = "/opt/throughline/bin/throughline";
+const THROUGHLINE = join(ROOT, "fixture-throughline");
 const IDENTITY = {
   candidate: THROUGHLINE,
   realpath: THROUGHLINE,

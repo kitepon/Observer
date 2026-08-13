@@ -4,8 +4,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
 
-const ROOT = new URL("..", import.meta.url).pathname;
+const ROOT = fileURLToPath(new URL("..", import.meta.url));
 
 function run(cwd, command, args, expectedStatus = 0) {
   const result = spawnSync(command, args, { cwd, encoding: "utf8" });
@@ -71,4 +72,3 @@ test("release gateはlanded clean commitだけを受理する", async (t) => {
   );
   assert.match(unpublished.stderr, /祖先ではありません/);
 });
-

@@ -100,6 +100,7 @@ export async function assertPrivateFile(target) {
 }
 
 async function syncDirectory(target) {
+  if (process.platform === "win32") return;
   const handle = await open(target, fsConstants.O_RDONLY);
   try {
     await handle.sync();
