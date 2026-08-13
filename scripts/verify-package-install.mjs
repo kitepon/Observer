@@ -69,7 +69,9 @@ try {
     "--no-fund",
   ]);
 
-  const installedRoot = join(prefix, "lib", "node_modules", "@quolu", "observer");
+  const installedRoot = process.platform === "win32"
+    ? join(prefix, "node_modules", "@quolu", "observer")
+    : join(prefix, "lib", "node_modules", "@quolu", "observer");
   const installedManifest = JSON.parse(await readFile(join(installedRoot, "package.json"), "utf8"));
   assert.equal(installedManifest.name, "@quolu/observer");
   assert.equal(installedManifest.version, "0.1.4");
@@ -77,10 +79,14 @@ try {
 
   const binRoot = process.platform === "win32" ? prefix : join(prefix, "bin");
   for (const name of binaryNames) {
-    await access(join(binRoot, name), process.platform === "win32" ? fsConstants.F_OK : fsConstants.X_OK);
+    await access(join(binRoot, process.platform === "win32" ? `${name}.cmd` : name), process.platform === "win32" ? fsConstants.F_OK : fsConstants.X_OK);
   }
 
-  const product = JSON.parse(run(join(binRoot, "observer"), ["diagnostics"], {
+  const runBinary = (name, args, options = {}) => process.platform === "win32"
+    ? run(process.env.ComSpec ?? "cmd.exe", ["/d", "/s", "/c", `call "${join(binRoot, `${name}.cmd`)}" ${args.join(" ")}`], options)
+    : run(join(binRoot, name), args, options);
+
+  const product = JSON.parse(runBinary("observer", ["diagnostics"], {
     expectedStatus: process.platform === "darwin" ? 0 : 1,
   }).stdout);
   assert.equal(product.manifest.name, "observer");
@@ -90,7 +96,7 @@ try {
     process.platform === "darwin" ? "ready" : "unsupported_platform",
   );
 
-  const mcp = JSON.parse(run(join(binRoot, "observer-mcp"), ["--diagnostics"]).stdout);
+  const mcp = JSON.parse(runBinary("observer-mcp", ["--diagnostics"]).stdout);
   assert.equal(mcp.status, "ready");
   assert.equal(mcp.server_version, "0.1.4");
   assert.deepEqual(mcp.tools, ["observer_read", "observer_wait"]);
@@ -100,7 +106,7 @@ try {
     "observer-hook-config",
     "observer-claude-characterization",
   ]) {
-    run(join(binRoot, name), [], { expectedStatus: 2 });
+    runBinary(name, [], { expectedStatus: 2 });
   }
 
   console.log("Observer isolated package install smoke passed.");
